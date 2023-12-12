@@ -47,6 +47,19 @@ class AudioRecorderFragment : Fragment()  {
     private var _binding: FragmentAudioRecorderBinding? = null
 
 
+
+    private val updateSeekBarTask = object : Runnable {
+        override fun run() {
+            if (recorder != null) {
+                if (!isSeekBarBeingTouched) {
+                    binding.audioSeekbar.progress = (System.currentTimeMillis() - recordingDuration).toInt()
+                }
+                // Update every 100 milliseconds
+                binding.audioSeekbar.postDelayed(this, 100)
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -92,6 +105,7 @@ class AudioRecorderFragment : Fragment()  {
             try {
                 setDataSource(fileName)
                 prepare()
+                seekTo(binding.audioSeekbar.progress) // Set the playback position to the current SeekBar progress
                 start()
 
                 // Update seek bar progress
@@ -114,16 +128,13 @@ class AudioRecorderFragment : Fragment()  {
         }
     }
 
-
-
     private fun stopPlaying() {
         try {
             player?.apply {
                 if (isPlaying) {
                     pause()
                 }
-                reset() // Reset the MediaPlayer to its uninitialized state
-                release()
+                // Do not reset and release, just pause
             }
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error stopping playback", e)
@@ -138,6 +149,18 @@ class AudioRecorderFragment : Fragment()  {
             setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
             setOutputFile(fileName)
             setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            recordingDuration = System.currentTimeMillis()
+            binding.root.post(updateSeekBarTask)
+            binding.root.postDelayed({
+                stopRecording()
+                binding.recordTimer.stop()
+                Toast.makeText(
+                    requireContext(),
+                    "Maximum recording time reached (1 minute)",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }, 60000) // 60000 milliseconds = 1 minute
+
             try {
                 prepare()
             } catch (e: IOException) {
@@ -164,6 +187,9 @@ class AudioRecorderFragment : Fragment()  {
             release()
         }
         recorder = null
+
+        // Remove the update task when recording stops
+        binding.audioSeekbar.removeCallbacks(updateSeekBarTask)
     }
 
     private fun deleteAudioFile() {
@@ -179,9 +205,6 @@ class AudioRecorderFragment : Fragment()  {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val max = 100 // Set the maximum value for the seek bar
-        val progress = 0 // Set the initial progress
 
         // Set a listener to handle SeekBar changes
         binding.audioSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
