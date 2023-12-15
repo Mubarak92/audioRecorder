@@ -180,13 +180,15 @@ class AudioRecorderFragment : Fragment()  {
             setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
             recordingDuration = System.currentTimeMillis()
             binding.root.postDelayed({
-                stopRecording()
-                binding.recordTimer.stop()
-                Toast.makeText(
-                    requireContext(),
-                    "Maximum recording time reached (1 minute)",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (binding.holdToRecord.isPressed) { // Check if the button is still being held
+                    stopRecording()
+                    binding.recordTimer.stop()
+                    Toast.makeText(
+                        requireContext(),
+                        "Maximum recording time reached (1 minute)",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }, 60000) // 60000 milliseconds = 1 minute
 
             try {
