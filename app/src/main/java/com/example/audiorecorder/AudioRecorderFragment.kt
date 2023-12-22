@@ -46,8 +46,6 @@ class AudioRecorderFragment : Fragment()  {
     private val binding get() = _binding!!
     private var _binding: FragmentAudioRecorderBinding? = null
 
-
-
     private val updateSeekBarTask = object : Runnable {
         override fun run() {
             if (recorder != null) {
@@ -87,7 +85,7 @@ class AudioRecorderFragment : Fragment()  {
         if (start) {
             startRecording()
             binding.recordTimer.isCountDown = true
-            binding.recordTimer.base = SystemClock.elapsedRealtime() + 60000
+            binding.recordTimer.base = SystemClock.elapsedRealtime() + 5000
             binding.recordTimer.start()
         } else {
             stopRecording()
@@ -96,7 +94,7 @@ class AudioRecorderFragment : Fragment()  {
     }
 
     private fun onPlay(start: Boolean) = if (start) {
-        startPlaying()
+            startPlaying()
     } else {
         stopPlaying()
     }
@@ -106,15 +104,24 @@ class AudioRecorderFragment : Fragment()  {
             try {
                 setDataSource(fileName)
                 prepare()
-                seekTo(binding.audioSeekbar.progress) // Set the playback position to the current SeekBar progress
+                seekTo(binding.audioSeekbar.progress)
                 start()
 
                 setOnCompletionListener {
                     stopPlaying()
                     // Reset SeekBar progress to 0
                     binding.audioSeekbar.progress = 0
-                    // Update the play button icon and set mStartPlaying to false
-                    updatePlayButtonIcon()
+                    mStartPlaying = true  // Update mStartPlaying to true
+                    Log.d(LOG_TAG, "Playback complete. mStartPlaying set to true.")
+
+                    // Change the play button icon to play
+                    binding.playButton.setImageDrawable(
+                        ResourcesCompat.getDrawable(
+                            resources,
+                            R.drawable.ic_play,
+                            null
+                        )
+                    )
                 }
 
                 // Update seek bar progress
@@ -125,36 +132,44 @@ class AudioRecorderFragment : Fragment()  {
                             if (!isSeekBarBeingTouched) {
                                 binding.audioSeekbar.progress = currentPosition
                             }
-                            // Check if playback is complete
                             if (currentPosition >= duration) {
                                 stopPlaying()
-                                // Reset SeekBar progress to 0
                                 binding.audioSeekbar.progress = 0
-                                // Update the play button icon and set mStartPlaying to false
-                                updatePlayButtonIcon()
                             } else {
-                                // Update every 100 milliseconds
                                 binding.audioSeekbar.postDelayed(this, 100)
                             }
                         }
                     }
                 }
                 binding.audioSeekbar.post(updateRunnable)
+
+                // Update playing timer
+                binding.playingTimer.base = SystemClock.elapsedRealtime() - binding.audioSeekbar.progress
+                binding.playingTimer.start()
+
+                // Change the play button icon to pause
+                binding.playButton.setImageDrawable(
+                    ResourcesCompat.getDrawable(
+                        resources,
+                        R.drawable.ic_pause,
+                        null
+                    )
+                )
             } catch (e: IOException) {
                 Log.e(LOG_TAG, "prepare() failed")
             }
         }
     }
 
-    // Function to update the play button icon based on mStartPlaying
-    private fun updatePlayButtonIcon() {
-        binding.playButton.setImageDrawable(
-            ResourcesCompat.getDrawable(
-                resources,
-                if (mStartPlaying) R.drawable.ic_play else R.drawable.ic_pause,
-                null
-            )
-        )
+
+
+
+    fun isSupportedMimeType(filePath: String): Boolean {
+        val extension = filePath.substringAfterLast('.', "")
+        return when (extension.toLowerCase()) {
+            "mp3", "webm", "wav" -> true
+            else -> false
+        }
     }
 
     private fun stopPlaying() {
@@ -163,14 +178,16 @@ class AudioRecorderFragment : Fragment()  {
                 if (isPlaying) {
                     pause()
                 }
-                // Do not reset and release, just pause
             }
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error stopping playback", e)
         } finally {
             player = null
+            binding.playingTimer.stop()
+            // Update the play button icon after stopping playback
         }
     }
+
 
     private fun startRecording() {
         recorder = MediaRecorder().apply {
@@ -189,7 +206,7 @@ class AudioRecorderFragment : Fragment()  {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            }, 60000) // 60000 milliseconds = 1 minute
+            }, 5000) // 60000 milliseconds = 1 minute
 
             try {
                 prepare()
@@ -230,7 +247,6 @@ class AudioRecorderFragment : Fragment()  {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        updatePlayButtonIcon()
 
         // Set a listener to handle SeekBar changes
         binding.audioSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -252,7 +268,7 @@ class AudioRecorderFragment : Fragment()  {
                 isSeekBarBeingTouched = false
             }
         })
-
+        binding.playingTimer.base = SystemClock.elapsedRealtime()
         binding.recordButton.setOnClickListener {
             onRecord(mStartRecording)
            binding.recording.visibility = when (mStartRecording) {
@@ -265,7 +281,7 @@ class AudioRecorderFragment : Fragment()  {
         binding.holdToRecord.setOnLongClickListener {
             onRecord(true)
             binding.recording.visibility = VISIBLE
-
+binding.recordTimer.visibility = VISIBLE
             true // Consume the long click event
         }
 
@@ -274,6 +290,7 @@ class AudioRecorderFragment : Fragment()  {
                 binding.holdToRecord.performClick()
                 onRecord(false)
                 binding.recording.visibility = GONE
+                binding.recordTimer.visibility = GONE
 
             }
             false
@@ -315,7 +332,7 @@ class AudioRecorderFragment : Fragment()  {
         super.onCreate(icicle)
 
         // Record to the external cache directory for visibility
-        fileName = "${context?.externalCacheDir?.absolutePath}/audiorecordtest.mp3"
+        fileName = "${context?.externalCacheDir?.absolutePath}/audiorecordtest.m4a"
 
         // Request microphone permission if not granted
         if (!permissionToRecordAccepted) {
