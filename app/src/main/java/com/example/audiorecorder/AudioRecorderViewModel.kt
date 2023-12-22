@@ -37,6 +37,7 @@ class AudioRecorderViewModel : ViewModel() {
     var recorder: MediaRecorder? = null
 
     var player: MediaPlayer? = null
+    private var isPlayerPaused = false
 
     var mStartRecording = true
     var mStartPlaying = true
@@ -63,6 +64,7 @@ class AudioRecorderViewModel : ViewModel() {
     }
 
 
+
     private fun startPlaying() {
         player = MediaPlayer().apply {
             try {
@@ -82,7 +84,7 @@ class AudioRecorderViewModel : ViewModel() {
 
                 // Update current position and seek bar progress periodically
                 viewModelScope.launch {
-                    while (isPlaying) {
+                    while (isPlaying && !isPlayerPaused) {
                         val currentPosition = currentPosition
                         _currentPosition.value = currentPosition
                         delay(SEEK_BAR_UPDATE_INTERVAL.toLong()) // Update every 100 milliseconds (adjust as needed)
@@ -96,15 +98,18 @@ class AudioRecorderViewModel : ViewModel() {
             }
         }
     }
+
     private fun updateSeekBar() {
         viewModelScope.launch {
             while (isPlaying.value) {
-                val currentPosition = player?.currentPosition ?: 0
-                val totalDuration = player?.duration ?: 0
+                if (!isSeekBarBeingTouched) {
+                    val currentPosition = player?.currentPosition ?: 0
+                    val totalDuration = player?.duration ?: 0
 
-                if (totalDuration > 0) {
-                    _currentPosition.value = currentPosition
-                    _totalDuration.value = totalDuration
+                    if (totalDuration > 0) {
+                        _currentPosition.value = currentPosition
+                        _totalDuration.value = totalDuration
+                    }
                 }
 
                 delay(SEEK_BAR_UPDATE_INTERVAL.toLong())
@@ -113,12 +118,12 @@ class AudioRecorderViewModel : ViewModel() {
     }
 
 
-
     private fun stopPlaying() {
         try {
             player?.apply {
                 if (isPlaying) {
                     pause()
+                    isPlayerPaused = true
                 }
             }
         } catch (e: Exception) {
@@ -126,8 +131,11 @@ class AudioRecorderViewModel : ViewModel() {
         } finally {
             _isPlaying.value = false
             player = null
+            isPlayerPaused = false // Reset the variable when stopping
         }
     }
+
+
     private fun startRecording() {
         recorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)

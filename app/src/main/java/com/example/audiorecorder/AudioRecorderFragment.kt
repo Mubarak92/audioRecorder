@@ -135,6 +135,17 @@ class AudioRecorderFragment : Fragment() {
             false
         }
 
+
+        binding.audioSeekbar.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
+                viewModel.isSeekBarBeingTouched = true
+            } else if (event.action == MotionEvent.ACTION_UP) {
+                viewModel.isSeekBarBeingTouched = false
+                viewModel.seekToRecordingPosition(binding.audioSeekbar.progress.toLong())
+            }
+            false
+        }
+
         binding.playButton.setOnClickListener {
             viewModel.onPlay(viewModel.mStartPlaying)
             binding.playing.visibility = when (viewModel.mStartPlaying) {
