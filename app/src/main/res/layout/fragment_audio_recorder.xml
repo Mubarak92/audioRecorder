@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraint_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".AudioRecorderFragment">
-
 
     <ImageButton
         android:id="@+id/delete_button"
@@ -43,6 +43,16 @@
         android:text="Hold to Record"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/record_button" />
+
+    <Button
+        android:id="@+id/save_to_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:backgroundTint="@color/gray"
+        android:text="Save"
+        app:layout_constraintBottom_toTopOf="@+id/playing"
+        app:layout_constraintStart_toEndOf="@+id/hold_to_record" />
 
     <Chronometer
         android:id="@+id/record_timer"
@@ -91,4 +101,13 @@
         app:layout_constraintTop_toBottomOf="@+id/hold_to_record"
         tools:visibility="visible" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/audio_rcv"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/record_timer" />
 </androidx.constraintlayout.widget.ConstraintLayout>

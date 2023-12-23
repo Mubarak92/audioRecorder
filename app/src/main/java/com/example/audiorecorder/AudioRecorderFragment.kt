@@ -23,12 +23,14 @@ import com.example.audiorecorder.databinding.FragmentAudioRecorderBinding
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
+import java.util.UUID
+
 private const val SEEK_BAR_UPDATE_INTERVAL = 100
 
 
 private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
-class AudioRecorderFragment : Fragment() {
+class AudioRecorderFragment : Fragment(),AudioRecordingClickListener {
 
     private val viewModel: AudioRecorderViewModel by viewModels()
 
@@ -80,7 +82,30 @@ class AudioRecorderFragment : Fragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val adapter = AudioRecordingAdapter(this)
+        binding.audioRcv.adapter = adapter
 
+        binding.saveToList.setOnClickListener {
+            viewModel.saveAudioFileToList()
+        }
+
+        lifecycleScope.launch {
+            viewModel.recordings.collect { recordings ->
+                adapter.submitList(recordings)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.recordings.collect { recordings ->
+                adapter.submitList(recordings)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.recordings.collect { recordings ->
+                adapter.updateRecordings(recordings)
+            }
+        }
 
         lifecycleScope.launch {
             viewModel.totalDuration.collect { duration ->
@@ -183,7 +208,7 @@ class AudioRecorderFragment : Fragment() {
         super.onCreate(icicle)
 
         // Record to the external cache directory for visibility
-        fileName = "${context?.externalCacheDir?.absolutePath}/audiorecordtest.m4a"
+        fileName = "${context?.externalCacheDir?.absolutePath}/audiorecordtest${UUID.randomUUID()}.m4a"
         viewModel.setAudioFileName(fileName)
         // Request microphone permission if not granted
         if (!viewModel.permissionToRecordAccepted) {
@@ -201,4 +226,8 @@ class AudioRecorderFragment : Fragment() {
         viewModel.player?.release()
         viewModel.player = null
     }
+
+    override fun onAudioRecordingClicked(recording: AudioRecording) {
+        viewModel.seekToRecordingPosition(0) // Reset position to start before playback
+        viewModel.onPlay(true)    }
 }
