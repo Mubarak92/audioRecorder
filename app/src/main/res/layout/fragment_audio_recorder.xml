@@ -45,6 +45,14 @@
         app:layout_constraintTop_toBottomOf="@+id/record_button" />
 
     <Chronometer
+        android:id="@+id/playing_timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/audio_seekbar" />
+
+    <Chronometer
         android:id="@+id/record_timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -68,14 +76,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Recording"
-        android:textSize="24sp"
         android:textStyle="bold"
+        android:textSize="24sp"
         android:visibility="gone"
-        app:drawableLeftCompat="@drawable/ic_circle_red"
+        tools:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/playing"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toBottomOf="@+id/audio_seekbar"
+        app:drawableLeftCompat="@drawable/ic_circle_red" />
 
     <TextView
         android:id="@+id/playing"
@@ -85,10 +94,10 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:visibility="gone"
+        tools:visibility="visible"
         app:drawableLeftCompat="@drawable/ic_circle_green"
+        app:layout_constraintBottom_toTopOf="@+id/recording"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hold_to_record"
-        tools:visibility="visible" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
