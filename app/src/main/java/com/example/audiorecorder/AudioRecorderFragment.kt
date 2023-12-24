@@ -230,33 +230,25 @@ class AudioRecorderFragment : Fragment()  {
         }
         recorder = null
 
-        val uri = Uri.parse(fileName)
-        val mmr = MediaMetadataRetriever()
-        mmr.setDataSource(context, uri)
-        val durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-        val millSecond = durationStr?.toInt()
-        fileDuration= millSecond
         // Calculate the recording duration
-        val recordingDurationMillis = millSecond
+        val recordingDurationMillis = SystemClock.elapsedRealtime() - recordingDuration
 
         // Check if the recording duration is less than 1 second
-        if (recordingDurationMillis != null) {
-            if (recordingDurationMillis < 1000) {
-                // Show a toast indicating that the recording is too short
-                Toast.makeText(
-                    requireContext(),
-                    "Recording is too short (less than 1 second) $millSecond" ,
-                    Toast.LENGTH_SHORT
-                ).show()
+        if (recordingDurationMillis <= 1000) {
+            // Show a toast indicating that the recording is too short
+            Toast.makeText(
+                requireContext(),
+                "Recording is too short (less than 1 second)",
+                Toast.LENGTH_SHORT
+            ).show()
 
-                // Delete the audio file
-                deleteAudioFile()
-            } else {
-                // Continue with normal processing
-                binding.audioSeekbar.progress = 0
-                // Remove the update task when recording stops
-                binding.audioSeekbar.removeCallbacks(updateSeekBarTask)
-            }
+            // Delete the audio file
+            deleteAudioFile()
+        } else {
+            // Continue with normal processing
+            binding.audioSeekbar.progress = 0
+            // Remove the update task when recording stops
+            binding.audioSeekbar.removeCallbacks(updateSeekBarTask)
         }
     }
 
@@ -291,6 +283,8 @@ class AudioRecorderFragment : Fragment()  {
             updatePlayingTime()
         }
     }
+
+
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
